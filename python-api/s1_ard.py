@@ -67,33 +67,44 @@ References
 
 import wrapper as wp
 import ee
+import geopandas as gpd
+import shapely
+from shapely import Polygon
 
 ee.Initialize()
 
 #/***************************/ 
 #// MAIN
 #/***************************/ 
+
+grid_file = '/content/Demilunes/Niger_RCT2_grid.gpkg'
+grid = gpd.read_file(grid_file)
+grid_web = grid.to_crs("EPSG:4326")
+AOI = ee.Geometry.Rectangle([grid_web.bounds.minx.min(), grid_web.bounds.miny.min(), grid_web.bounds.maxx.max(), grid_web.bounds.maxy.max()])
+AOI_bounds = list(shapely.Polygon(AOI.getInfo().get('coordinates')[0]).bounds)
+AOI_bounds
+
 #Parameters
-parameter = {  'START_DATE': '2018-01-01',
-            'STOP_DATE': '2018-01-10',        
+parameter = {  'START_DATE': '2022-01-01',
+            'STOP_DATE': '2023-04-10',        
             'POLARIZATION': 'VVVH',
-            'ORBIT' : 'DESCENDING',
-            #'ORBIT_NUM': None,
-            'ROI': ee.Geometry.Rectangle([-47.1634, -3.00071, -45.92746, -5.43836]),
-            'APPLY_BORDER_NOISE_CORRECTION': False,
+            'ORBIT' : 'ASCENDING',
+            'ORBIT_NUM': 132,
+            'ROI': ee.Geometry.Rectangle(AOI_bounds),
+            'APPLY_BORDER_NOISE_CORRECTION': True,
             'APPLY_SPECKLE_FILTERING': True,
             'SPECKLE_FILTER_FRAMEWORK':'MULTI',
-            'SPECKLE_FILTER': 'GAMMA MAP',
-            'SPECKLE_FILTER_KERNEL_SIZE': 9,
+            'SPECKLE_FILTER': 'REFINED LEE',
+            'SPECKLE_FILTER_KERNEL_SIZE': 5,
             'SPECKLE_FILTER_NR_OF_IMAGES':10,
             'APPLY_TERRAIN_FLATTENING': True,
             'DEM': ee.Image('USGS/SRTMGL1_003'),
             'TERRAIN_FLATTENING_MODEL': 'VOLUME',
             'TERRAIN_FLATTENING_ADDITIONAL_LAYOVER_SHADOW_BUFFER':0,
             'FORMAT': 'DB',
-            'CLIP_TO_ROI': False,
-            'SAVE_ASSET': True,
-            'ASSET_ID': "users/mraj"
+            'CLIP_TO_ROI': True,
+            'SAVE_ASSET': False,
+            'ASSET_ID': "users/l_sharwood"
             }
 #processed s1 collection
 s1_processed = wp.s1_preproc(parameter)
